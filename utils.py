@@ -27,8 +27,7 @@ label_dict = {
     'tallbuilding':13,
 }
 
-base_dir = '/home/jovyan/kaggle-where_am_i'
-os.chdir('/home/jovyan/kaggle-where_am_i')
+base_dir = './'
 
 def load_image(img_file, y, shape=50):
     x_train = np.array([]).reshape((0, shape*shape))
