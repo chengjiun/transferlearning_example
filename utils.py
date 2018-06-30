@@ -126,12 +126,12 @@ def predict(model, dataloader, prob=False):
     for inputs, labels in pbar:
         all_labels.append(labels)
 
-        inputs = Variable(inputs, volatile=True)
+        inputs = Variable(inputs)
         if use_gpu:
             inputs = inputs.cuda()
 
         outputs = model(inputs)
-        if prob:
+        if not prob:
             all_outputs.append(outputs.data.cpu())
         else:
             _, preds = torch.max(outputs.data, dim=1)

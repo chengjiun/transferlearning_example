@@ -15,7 +15,7 @@ import logging
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 NB_CLASSES = 15
-BATCH_SIZE = 16
+BATCH_SIZE = 1
 IMAGE_SIZE = 224
 VALID_SIZE = 0.1
 TRAIN_ENLARGE_FACTOR = 5
@@ -48,7 +48,8 @@ def train():
     nb_learnable_params = sum(p.numel() for p in model.fresh_params())
     print(f'[+] nb learnable params {nb_learnable_params}')
 
-    lx, px = utils.predict(model, valid_data_loader)
+    lx, px = utils.predict(model, valid_data_loader, prob=False)
+    print(type(px))
     min_loss = criterion(Variable(px), Variable(lx)).data[0]
     _, preds = torch.max(px.data, dim=1)
     accuracy = torch.mean((preds != lx).float())
