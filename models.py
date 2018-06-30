@@ -26,6 +26,7 @@ class ResNetFinetune(nn.Module):
     def __init__(self, num_classes, net_cls=M.resnet50, dropout=False):
         super().__init__()
         self.net = net_cls(pretrained=True)
+        self.net.avgpool = nn.AdaptiveAvgPool2d(1)
         if dropout:
             self.net.fc = nn.Sequential(
                 nn.Dropout(),
