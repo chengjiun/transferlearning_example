@@ -18,13 +18,17 @@ NB_CLASSES = 15
 BATCH_SIZE = 20 
 IMAGE_SIZE = 224
 VALID_SIZE = 0.1
-TRAIN_ENLARGE_FACTOR = 3
-EPOCH = 20
-MODEL_FILE_NAME = 'densenet161.pth'
+TRAIN_ENLARGE_FACTOR = 5
+EPOCH = 50 
+MODEL_FILE_NAME = 'resnet18-070102.pth'
 PATIENCE_LIMIT = 2
+RANDOM_SEED = 2
+MODEL = models.resnet18_finetune
+EARLY_STOP = 6
+
 def get_model():
     print('[+] loading model... ', end='', flush=True)
-    model = models.densenet161_finetune(NB_CLASSES)
+    model = MODEL(NB_CLASSES)
     if use_gpu:
         model.cuda()
     print('done')
@@ -37,7 +41,7 @@ def train():
     training_data_loader, valid_data_loader = (split_train_val_loader(train_dataset, valid_dataset,
                            len(train_dataset), valid_size=VALID_SIZE, batch_size=BATCH_SIZE,
 			   train_enlarge_factor=TRAIN_ENLARGE_FACTOR,
-                           pin_memory=True, num_workers=1
+                           pin_memory=True, num_workers=1, random_seed=RANDOM_SEED
                            ))
 
 
@@ -49,24 +53,30 @@ def train():
     print(f'[+] nb learnable params {nb_learnable_params}')
 
     lx, px = utils.predict(model, valid_data_loader, prob=False)
-    print(type(px))
     min_loss = criterion(Variable(px), Variable(lx)).item()
     _, preds = torch.max(px.data, dim=1)
     accuracy = torch.mean((preds != lx).float())
     print(f' original loss: {min_loss}, accuracy: {accuracy}')
 
     lr = 0.001
-    patience = 0 
+    patience = 0
+    earlystop = 0
     optimizer = torch.optim.Adam(model.fresh_params(), lr=lr)
     torch.save(model.state_dict(), MODEL_FILE_NAME)
     for epoch in range(EPOCH):
-        print(f'epoch {epoch}')
+        if epoch == 1:
+            lr = 0.0005
+            print(f'[+] set lr={lr}')
         if patience == PATIENCE_LIMIT:
             patience = 0
             model.load_state_dict(torch.load(MODEL_FILE_NAME))
             lr = lr / 10
             print(f'[+] set lr={lr}')
-        if epoch > 0::
+        if earlystop > EARLY_STOP:
+            model.load_state_dict(torch.load(MODEL_FILE_NAME))
+            print('EARLY STOPPED')
+            continue
+        if epoch > 0:
             optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0.0001)
 
         running_loss = RunningMean()
@@ -94,24 +104,24 @@ def train():
             loss.backward()
             optimizer.step()
 
-            pbar.set_description(f'{running_loss.value:.5f} {running_score.value:.3f}')
-
-	model.eval()
+            pbar.set_description(f'{epoch}: {running_loss.value:.5f} {running_score.value:.3f}')
+	
+        model.eval()
         lx, px = utils.predict(model, valid_data_loader)
         log_loss = criterion(Variable(px), Variable(lx))
         log_loss = log_loss.item()
         _, preds = torch.max(px, dim=1)
         accuracy = torch.mean((preds == lx).float())
-        logging.info(f'[+] val loss: {log_loss:.5f} acc: {accuracy:.3f}')
+        print(f'[+] val loss: {log_loss:.5f} acc: {accuracy:.3f}')
 
-        if ((log_loss < min_loss) or (epoch == 1)):
+        if (log_loss < min_loss):
             torch.save(model.state_dict(), MODEL_FILE_NAME)
-            logging.info(f'[+] val loss improved from {min_loss:.5f} to {log_loss:.5f}, accuracy={accuracy}. Saved!')
+            print(f'[+] val loss improved from {min_loss:.5f} to {log_loss:.5f}, accuracy={accuracy}. Saved!')
             min_loss = log_loss
             patience = 0
         else:
             patience += 1
-
+            earlystop += 1
 
 if __name__ == "__main__":
     train()

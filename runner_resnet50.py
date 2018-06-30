@@ -17,14 +17,14 @@ logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S
 NB_CLASSES = 15
 BATCH_SIZE = 20 
 IMAGE_SIZE = 224
-VALID_SIZE = 0.1
+VALID_SIZE = 0.2
 TRAIN_ENLARGE_FACTOR = 5
-EPOCH = 20
-MODEL_FILE_NAME = 'densenet121-070102.pth'
+EPOCH = 50 
+MODEL_FILE_NAME = 'resnet50-070102.pth'
 PATIENCE_LIMIT = 2
-RANDOM_SEED = 1
-MODEL = models.densenet161_finetune
-EARLY_STOP = 6
+RANDOM_SEED = 3
+MODEL = models.resnet50_finetune
+EARLY_STOP = 10
 
 def get_model():
     print('[+] loading model... ', end='', flush=True)
@@ -114,7 +114,7 @@ def train():
         accuracy = torch.mean((preds == lx).float())
         print(f'[+] val loss: {log_loss:.5f} acc: {accuracy:.3f}')
 
-        if log_loss < min_loss:
+        if (log_loss < min_loss):
             torch.save(model.state_dict(), MODEL_FILE_NAME)
             print(f'[+] val loss improved from {min_loss:.5f} to {log_loss:.5f}, accuracy={accuracy}. Saved!')
             min_loss = log_loss
