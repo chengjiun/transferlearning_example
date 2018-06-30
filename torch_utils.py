@@ -19,9 +19,9 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders,
     es_accum = 0
     result_df = pd.DataFrame(columns=['train_acc', 'train_loss', 'val_acc', 'val_loss'])
     for epoch in range(num_epochs):
-	if es_accum > early_stop:
-	    print(f'early stopped at epoch = {epoch}')
-	    continue
+        if es_accum > early_stop:
+            print(f'early stopped at epoch = {epoch}')
+            continue
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
 
@@ -62,20 +62,20 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders,
 	
             epoch_loss = running_loss / dataset_sizes[phase]
             epoch_acc = running_corrects.double() / dataset_sizes[phase]
-	    result_df.loc[epoch, phase+'_acc'] = epoch_acc
+            result_df.loc[epoch, phase+'_acc'] = epoch_acc
             result_df.loc[epoch, phase+'_loss'] = epoch_loss
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
 
             # deep copy the model, early_stopping
             if phase == 'val':
-		if epoch_loss < best_loss:
+                if epoch_loss < best_loss:
                     best_acc = epoch_acc
-		    best_loss = epoch_loss
+                    best_loss = epoch_loss
                     es_accum = 0
-		    best_model_wts = copy.deepcopy(model.state_dict())
-		else:
-		    es_accum += 1
+                    best_model_wts = copy.deepcopy(model.state_dict())
+                else:
+                    es_accum += 1
 
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(
@@ -85,7 +85,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders,
     # load best model weights
     model.load_state_dict(best_model_wts)
     if model_name is not None:
-    	torch.save(model.state_dict(), model_name)
+        torch.save(model.state_dict(), model_name)
         print(f'model saved to {model_name}')
     return model, result_df
 
