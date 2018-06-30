@@ -16,7 +16,7 @@ def split_train_val_loader(train_dataset, valid_dataset,
     train_idx_large = np.repeat(train_idx, train_enlarge_factor)
     np.random.shuffle(train_idx_large)
     train_sampler = SubsetRandomSampler(train_idx_large)
-    valid_sampler = SequentialSampler(valid_idx)
+    valid_sampler = SubsetRandomSampler(valid_idx)
 
     train_loader = DataLoader(
         train_dataset, batch_size=batch_size, sampler=train_sampler,
@@ -26,6 +26,7 @@ def split_train_val_loader(train_dataset, valid_dataset,
         valid_dataset, batch_size=batch_size, sampler=valid_sampler,
         num_workers=num_workers, pin_memory=pin_memory,
     )
+
     return train_loader, valid_loader
 
 def get_data_loader(path, data_transform, batch_size=1, num_workers=1):

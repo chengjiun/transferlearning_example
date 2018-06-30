@@ -50,6 +50,9 @@ def train():
 
     lx, px = utils.predict(model, valid_data_loader)
     min_loss = criterion(Variable(px), Variable(lx)).data[0]
+    _, preds = torch.max(px.data, dim=1)
+    accuracy = torch.mean((preds != lx).float())
+    print(f' original loss: {min_loss}, accuracy: {accuracy}')
 
     lr = 0
     patience = 0 
@@ -91,24 +94,24 @@ def train():
 
             loss = criterion(outputs, labels)
             running_loss.update(loss.data[0], 1)
-            running_score.update(torch.sum(preds != labels.data), batch_size)
+            running_score.update(torch.sum(preds == labels.data).float(), batch_size)
 
             loss.backward()
             optimizer.step()
 
             pbar.set_description(f'{running_loss.value:.5f} {running_score.value:.3f}')
-        print(f'[+] epoch {epoch} {running_loss.value:.5f} {running_score.value:.3f}')
+        print(f'[+] epoch {epoch} train loss: {running_loss.value:.5f}, acc: {running_score.value:.3f}')
 
         lx, px = utils.predict(model, valid_data_loader)
         log_loss = criterion(Variable(px), Variable(lx))
         log_loss = log_loss.data[0]
         _, preds = torch.max(px, dim=1)
-        accuracy = torch.mean((preds != lx).float())
-        logging.info(f'[+] val {log_loss:.5f} {accuracy:.3f}')
+        accuracy = torch.mean((preds == lx).float())
+        logging.info(f'[+] val loss: {log_loss:.5f} acc: {accuracy:.3f}')
 
         if ((log_loss < min_loss) or (epoch == 1)):
             torch.save(model.state_dict(), MODEL_FILE_NAME)
-            logging.info(f'[+] val score improved from {min_loss:.5f} to {log_loss:.5f}. Saved!')
+            logging.info(f'[+] val loss improved from {min_loss:.5f} to {log_loss:.5f}, accuracy={accuracy}. Saved!')
             min_loss = log_loss
             patience = 0
         else:

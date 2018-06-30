@@ -118,15 +118,12 @@ class RunningMean:
     def __str__(self):
         return str(self.value)
 
-
-def predict(model, dataloader, use_gpu=True, use_tqdm=False):
+def predict(model, dataloader, prob=False):
     all_labels = []
     all_outputs = []
     model.eval()
-    if use_tqdm:
-        pbar = tqdm(dataloader, total=len(dataloader))
-    else:
-        pbar = dataloader
+
+    pbar = tqdm(dataloader, total=len(dataloader))
     for inputs, labels in pbar:
         all_labels.append(labels)
 
@@ -135,8 +132,12 @@ def predict(model, dataloader, use_gpu=True, use_tqdm=False):
             inputs = inputs.cuda()
 
         outputs = model(inputs)
-        all_outputs.append(outputs.data.cpu())
-
+        if prob:
+            all_outputs.append(outputs.data.cpu())
+        else:
+            _, preds = torch.max(outputs.data, dim=1)
+            all_outputs.append(preds.data.cpu())
+            
     all_outputs = torch.cat(all_outputs)
     all_labels = torch.cat(all_labels)
     if use_gpu:
