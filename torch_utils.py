@@ -6,6 +6,67 @@ import torch
 import time
 import copy
 
+from preprocess import normalize_05, normalize_torch, preprocess, preprocess_hflip, preprocess_with_augmentation
+import models
+from augmentation import five_crops, HorizontalFlip, make_transforms
+from torchvision import transforms
+from torchvision.datasets.folder import ImageFolder
+import utils
+
+def predict_to_ensemble(model_name, model_class, 
+            model_state_pth, image_size, normalize, 
+            nb_classes=15, batch_size=15):
+    print(f'[+] predict {model_name}')
+    model = get_model(model_class, nb_classes, model_state_pth=model_state_pth)
+    model.eval()
+
+    tta_preprocess = [preprocess(normalize, image_size), preprocess_hflip(normalize, image_size)]
+    tta_preprocess += make_transforms([transforms.Resize((image_size + 20, image_size + 20))],
+                                      [transforms.ToTensor(), normalize],
+                                      five_crops(image_size))
+    print(f'[+] tta size: {len(tta_preprocess)}')
+    
+
+    data_loaders = []
+    for transform in tta_preprocess:
+        data_loader = get_data_loader('./test/',data_transform=transform, batch_size=batch_size)
+
+        data_loaders.append(data_loader)
+
+    lx, px = utils.predict_tta(model, data_loaders)
+    test_predict = {
+        'lx': lx.cpu(),
+        'px': px.cpu(),
+    }
+    torch.save(test_predict, f'{model_name}_test_prediction.pth')
+
+    data_loaders = []
+    for transform in tta_preprocess:
+        valid_dataset = ImageFolder('./data/train/', transform=transform)
+        data_loader = get_data_loader('./data/train/', batch_size=batch_size, dataset=valid_dataset)
+
+        data_loaders.append(data_loader)
+
+    lx, px = utils.predict_tta(model, data_loaders)
+    val_predict = {
+        'lx': lx.cpu(),
+        'px': px.cpu(),
+    }
+    torch.save(val_predict, f'{model_name}_val_prediction.pth')
+
+    return {'test': test_predict, 'val': val_predict}
+
+def get_model(model_class, nb_classes, model_state_pth=None):
+    print('[+] loading model... ', end='', flush=True)
+    model = model_class(nb_classes)
+    if torch.cuda.is_available(): 
+        model.cuda()
+    if model_state_pth is not None:
+        print(f'[+] loading state pth: {model_state_pth}')
+        model.load_state_dict(torch.load(model_state_pth))
+    return model
+
+
 # https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
 def train_model(model, criterion, optimizer, scheduler, dataloaders,
                 num_epochs=25, model_name=None, early_stop=None):
@@ -116,8 +177,13 @@ def split_train_val_loader(train_dataset, valid_dataset,
 
     return train_loader, valid_loader
 
-def get_data_loader(path, data_transform, batch_size=1, num_workers=1):
-   test_dataset = ImageFolder('./test/', data_transform)
+def get_data_loader(path, data_transform=None, batch_size=1, num_workers=1, dataset=None):
+   if dataset is None:
+       if data_transform is None:
+           raise 
+       test_dataset = ImageFolder('./test/', data_transform)
+   else:
+       test_dataset = dataset
    test_loader = DataLoader(
        test_dataset, batch_size=batch_size, sampler=None,
        num_workers=num_workers, pin_memory=True,

@@ -1,5 +1,5 @@
 from torchvision import transforms
-
+from augmentation import five_crops, HorizontalFlip, make_transforms
 
 normalize_05 = transforms.Normalize(
     mean=[0.5, 0.5, 0.5],
@@ -33,6 +33,14 @@ def preprocess_with_augmentation_affine(normalize, image_size):
         transforms.RandomAffine(15, translate=(0.1,0.1), scale=(0.7,1.5), shear=5),
         transforms.RandomCrop(size=image_size,pad_if_needed=True),
         transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        normalize
+    ])
+
+def preprocess_hflip(normalize, image_size):
+    return transforms.Compose([
+        transforms.Resize((image_size, image_size)),
+        HorizontalFlip(),
         transforms.ToTensor(),
         normalize
     ])

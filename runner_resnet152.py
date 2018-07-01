@@ -6,7 +6,7 @@ from torchvision.datasets.folder import ImageFolder, DatasetFolder
 from torch.autograd import Variable
 
 import models
-from torch_utils import split_train_val_loader
+from torch_utils import split_train_val_loader, get_model
 import utils
 from utils import RunningMean, use_gpu
 from preprocess import preprocess, preprocess_with_augmentation, normalize_05, normalize_torch
@@ -26,14 +26,6 @@ RANDOM_SEED = 152
 MODEL = models.resnet152_finetune
 EARLY_STOP = 10
 
-def get_model():
-    print('[+] loading model... ', end='', flush=True)
-    model = MODEL(NB_CLASSES)
-    if use_gpu:
-        model.cuda()
-    print('done')
-    return model
-
 
 def train():
     train_dataset = ImageFolder('./data/train/', transform=preprocess_with_augmentation(normalize_torch, IMAGE_SIZE))
@@ -45,7 +37,7 @@ def train():
                            ))
 
 
-    model = get_model()
+    model = get_model(MODEL, NB_CLASSES)
 
     criterion = nn.CrossEntropyLoss().cuda()
 
