@@ -23,7 +23,7 @@ EPOCH = 50
 MODEL_FILE_NAME = 'resnet18-070117.pth'
 PATIENCE_LIMIT = 2
 RANDOM_SEED = 36
-MODEL = models.resnet152_finetune
+MODEL = models.resnet18_finetune
 EARLY_STOP = 10
 
 

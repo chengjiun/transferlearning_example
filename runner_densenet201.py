@@ -23,7 +23,7 @@ EPOCH = 50
 MODEL_FILE_NAME = 'densenet201-070115.pth'
 PATIENCE_LIMIT = 5 
 RANDOM_SEED = 201
-MODEL = models.densenet121_finetune
+MODEL = models.densenet201_finetune
 EARLY_STOP = 15
 
 
