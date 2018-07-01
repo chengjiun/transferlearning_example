@@ -15,15 +15,16 @@ import utils
 
 def predict_to_ensemble(model_name, model_class, 
             model_state_pth, image_size, normalize, 
-            nb_classes=15, batch_size=15):
+            nb_classes=15, batch_size=15, withcrops=True):
     print(f'[+] predict {model_name}')
     model = get_model(model_class, nb_classes, model_state_pth=model_state_pth)
     model.eval()
 
     tta_preprocess = [preprocess(normalize, image_size), preprocess_hflip(normalize, image_size)]
-    tta_preprocess += make_transforms([transforms.Resize((image_size + 20, image_size + 20))],
-                                      [transforms.ToTensor(), normalize],
-                                      five_crops(image_size))
+    if with_crops:
+        tta_preprocess += make_transforms([transforms.Resize((image_size + 20, image_size + 20))],
+                                          [transforms.ToTensor(), normalize],
+                                          five_crops(image_size))
     print(f'[+] tta size: {len(tta_preprocess)}')
     
 
