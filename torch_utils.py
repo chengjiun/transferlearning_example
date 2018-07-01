@@ -15,7 +15,7 @@ import utils
 
 def predict_to_ensemble(model_name, model_class, 
             model_state_pth, image_size, normalize, 
-            nb_classes=15, batch_size=15, withcrops=True):
+            nb_classes=15, batch_size=15, with_crops=True):
     print(f'[+] predict {model_name}')
     model = get_model(model_class, nb_classes, model_state_pth=model_state_pth)
     model.eval()
