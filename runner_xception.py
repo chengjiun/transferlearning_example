@@ -16,7 +16,7 @@ logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S
 
 NB_CLASSES = 15
 BATCH_SIZE = 20 
-IMAGE_SIZE = 224
+IMAGE_SIZE = 299
 VALID_SIZE = 0.1
 TRAIN_ENLARGE_FACTOR = 5
 EPOCH = 50 
